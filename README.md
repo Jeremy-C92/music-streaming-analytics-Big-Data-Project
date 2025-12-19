@@ -1,16 +1,46 @@
-# music-streaming-analytics-Big-Data-Project
-Lambda Architecture for Real-Time Music Streaming Analytics with Kafka &amp; Spark
 
-Description :
+# 📋 Project Overview
 
-"An end-to-end Big Data pipeline implementing the Lambda Architecture to analyze music streaming trends. This project solves the latency vs. accuracy trade-off by combining a Hot Layer (Spark Structured Streaming on Kafka) for real-time metrics and a Cold Layer (Spark SQL on Parquet Data Lake) for deep historical analysis. Containerized with Docker for reproducibility."
+This project implements a complete **Big Data Lambda Architecture** to analyze music streaming data. It solves the challenge of balancing low-latency reporting with comprehensive historical analysis by using two parallel processing layers.
 
-Key Technical Highlights :
+The pipeline simulates a high-traffic streaming platform (similar to Spotify) and processes user events to detect trends in real-time while archiving data for deep analytics.
 
-- Real-time Ingestion: Handling high-velocity event streams via Apache Kafka (v7.5).
+## Architecture Highlights
+* **Hot Layer (Real-Time):** Processes live streams using **Spark Structured Streaming** to calculate "Trending Songs" in 10-minute sliding windows.
+* **Cold Layer (Batch):** Performs complex aggregations on historical data stored in a **Parquet Data Lake** using **Spark SQL**.
+* **Ingestion:** A Python-based producer generates realistic events (weighted popularity, geolocation, device types) sent to **Apache Kafka**.
 
-- Hybrid Processing: Simultaneous stream processing (Windowed Aggregation) and batch persistence.
+## 🏗️ Technical Architecture
 
-- Infrastructure as Code: Full Docker Compose orchestration with custom networking and volume management.
+The entire infrastructure is containerized using **Docker Compose** to ensure reproducibility.
 
-- Robustness: Implemented retry logic for Kafka producers and checkpointing for Spark Streaming.
+| Component | Technology | Role |
+| :--- | :--- | :--- |
+| **Generator** | Python (Kafka-Python) | Simulates thousands of user listening events/sec. |
+| **Message Broker** | Confluent Kafka (v7.5) | Buffers and distributes events to consumers. |
+| **Stream Engine** | Spark Structured Streaming | Consumes Kafka topics, aggregates metrics, and writes to Data Lake. |
+| **Batch Engine** | Spark SQL | Reads Parquet files for weekly charts & geographic analysis. |
+| **Storage** | Parquet Files | Columnar storage format for optimized querying (Snappy compression). |
+
+
+## 🚀 Quick Start
+
+1.  **Launch Infrastructure:**
+    ```bash
+    docker compose up -d
+    ```
+
+2.  **Start Producer (Windows):**
+    ```bash
+    pip install kafka-python
+    python producer.py --broker 127.0.0.1:9092
+    ```
+
+3.  **Run Spark Jobs (Docker):**
+    ```bash
+    # Real-time Streaming
+    docker exec -it spark-master /opt/spark/bin/spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0 /opt/spark/work-dir/stream_job.py
+
+    # Batch Analysis (after a few mins)
+    docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/work-dir/batch_job.py
+    ```
