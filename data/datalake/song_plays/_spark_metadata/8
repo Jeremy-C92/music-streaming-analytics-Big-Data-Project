@@ -1,0 +1,2 @@
+v1
+{"path":"file:///opt/spark/data/datalake/song_plays/date=2025-12-20/hour=0/part-00000-913c7038-b79c-4356-a972-02281d345d81.c000.snappy.parquet","size":8410,"isDir":false,"modificationTime":1766186281080,"blockReplication":1,"blockSize":33554432,"action":"add"}
