@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 """
 Real-Time Trending Songs Calculator (HOT LAYER)
 Uses Spark Structured Streaming to compute trending songs in 10-minute windows
@@ -17,8 +17,6 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
 def create_spark_session():
     """Create Spark session with optimized configurations"""
     return SparkSession.builder \
@@ -63,8 +61,6 @@ def read_from_kafka(spark, kafka_servers="kafka:29092", topic="song-plays"):
 
 def process_stream(df, schema):
     """Transform and aggregate streaming data"""
-    
-    # Parse JSON from Kafka value
     parsed_df = df.selectExpr("CAST(value AS STRING)") \
         .select(from_json(col("value"), schema).alias("data")) \
         .select("data.*")
@@ -77,8 +73,6 @@ def process_stream(df, schema):
     
     # Filter only completed plays (users who listened >70% of song)
     completed_plays = parsed_df.filter(col("completed") == True)
-    
-    # Calculate trending songs in 10-minute tumbling windows
     trending = completed_plays \
         .withWatermark("event_time", "10 minutes") \
         .groupBy(
@@ -97,7 +91,6 @@ def process_stream(df, schema):
             col("play_count")
         ) \
         .orderBy(desc("play_count"))
-    
     return trending
 
 
@@ -118,8 +111,6 @@ def save_to_datalake(df, output_path="/opt/spark/data/datalake/song_plays"):
         .start()
     
     return query
-
-
 def display_trending_console(df):
     """Display trending songs to console for monitoring"""
     
@@ -130,7 +121,6 @@ def display_trending_console(df):
         .option("numRows", 10) \
         .trigger(processingTime="30 seconds") \
         .start()
-    
     return query
 
 
@@ -145,21 +135,17 @@ def main():
     
     # Define schema
     schema = define_schema()
-    
     # Read from Kafka
     kafka_df = read_from_kafka(spark)
     
     # Process stream
-    processed_df = process_stream(kafka_df, schema)
-    
+    processed_df = process_stream(kafka_df, schema)   
     # Start queries
     logger.info("📊 Starting streaming queries...")
     
     # Query 1: Display trending to console
     console_query = display_trending_console(processed_df)
     
-    # Query 2: Save raw events to Data Lake (for batch processing later)
-    # Extract parsed data from kafka_df first
     parsed_for_save = kafka_df.selectExpr("CAST(value AS STRING)") \
         .select(from_json(col("value"), schema).alias("data")) \
         .select("data.*") \

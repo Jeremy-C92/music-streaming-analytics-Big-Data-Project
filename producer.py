@@ -96,7 +96,6 @@ class MusicStreamProducer:
                     acks='all',  # Wait for all replicas
                     retries=3,
                     max_in_flight_requests_per_connection=1,
-                    #compression_type='snappy',
                     batch_size=32768,
                     linger_ms=10
                 )
