@@ -111,7 +111,6 @@ class MusicStreamProducer:
     
     def generate_event(self):
         """Generate a realistic song play event with weighted selection"""
-        # Weighted random selection (popular songs play more often)
         weights = [song['weight'] for song in SONGS_CATALOG]
         song = random.choices(SONGS_CATALOG, weights=weights, k=1)[0]
         
@@ -136,7 +135,6 @@ class MusicStreamProducer:
                 key=event['song_id'],
                 value=event
             )
-            # Block for 'synchronous' sends
             record_metadata = future.get(timeout=10)
             return True
         except KafkaError as e:
@@ -161,18 +159,13 @@ class MusicStreamProducer:
         try:
             while True:
                 loop_start = time.time()
-                
-                # Generate and send event
                 event = self.generate_event()
                 if self.send_event(event):
                     events_sent += 1
-                    
-                    # Log progress every 100 events
                     if events_sent % 100 == 0:
                         elapsed = time.time() - start_time
                         rate = events_sent / elapsed
                         logger.info(f"📈 Sent {events_sent} events | Rate: {rate:.1f}/sec")
-                
                 # Check duration limit
                 if duration_seconds and (time.time() - start_time) > duration_seconds:
                     logger.info(f"✓ Reached duration limit: {duration_seconds}s")

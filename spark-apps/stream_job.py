@@ -172,7 +172,6 @@ def main():
     logger.info("💾 Raw events being saved to Data Lake")
     logger.info("Press Ctrl+C to stop")
     
-    # Wait for termination
     try:
         console_query.awaitTermination()
     except KeyboardInterrupt:
