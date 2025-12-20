@@ -58,10 +58,10 @@ Our architecture implements a **medallion-style storage logic** where raw events
 
 During the implementation, we handled several real-world Big Data integration issues:
 
-* **Kafka Listener Misconfiguration:** We initially struggled with `NoBrokersAvailable` errors. We resolved this by configuring dual listeners: `29092` for internal Docker communication (Spark-to-Kafka) and `9092` for external host access (Python Producer).
-* **Spark PATH Resolution:** Running `spark-submit` inside the container required using the absolute path `/opt/spark/bin/spark-submit` as it wasn't present in the default OCI runtime PATH.
-* **Schema Enforcement:** Since Kafka handles data as raw bytes, we implemented a strict `StructType` schema in Spark to ensure the incoming JSON events are valid before processing.
-* **Data Persistence:** To achieve a relevant "Monthly Top Chart", we modified the `producer.py` to generate randomized timestamps over a 30-day period, simulating historical depth in the Data Lake.
+* **Kafka Listener & Network Isolation:** We initially faced `NoBrokersAvailable` errors because the Python Producer (running on the Host) and Spark (running in Docker) required different access points. We resolved this by configuring dual listeners: `29092` for internal Docker traffic and `9092` for external host access.
+* **Data Persistence & Volume Mapping:** A major challenge was the "Path does not exist" error during batch processing. We solved this by synchronizing Docker volumes in the `docker-compose.yml` to ensure the Stream Job writes to the same physical `./data` directory that the Batch Job reads from.
+* **Spark PATH Resolution:** Since `spark-submit` was not in the default OCI runtime PATH of the Spark image, we had to use the absolute path `/opt/spark/bin/spark-submit` to execute our jobs within the container.
+* **Schema Enforcement & Data Integrity:** Because Kafka treats data as raw bytes, we implemented a strict `StructType` schema in Spark. This ensures all incoming JSON events are correctly typed and validated before being stored in the Data Lake.
 
 ## 📈 Key Learnings
 
