@@ -44,3 +44,25 @@ The entire infrastructure is containerized using **Docker Compose** to ensure re
     # Batch Analysis (after a few mins)
     docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/work-dir/batch_job.py
     ```
+
+## 📂 Data Lake Structure & Management
+
+Our architecture implements a **medallion-style storage logic** where raw events are persisted for long-term durability.
+
+* **`data/datalake/song_plays/`**: This is the root of our Cold Layer. Data is stored in **Parquet format**, a columnar storage optimized for Big Data.
+* **`date=YYYY-MM-DD/hour=X/`**: We use **Time-based Partitioning**. This allows Spark to perform "Partition Pruning", skipping irrelevant folders when calculating a monthly top chart, which drastically improves performance.
+* **`_checkpoint/`**: Vital for the **Hot Layer**. It stores the current offset of the Kafka stream. If the system crashes, Spark uses this metadata to resume exactly where it left off without losing data (Resilience).
+* **`_spark_metadata/`**: A transaction log that ensures "Exactly-once" processing semantics when writing Parquet files.
+
+## 🛠️ Challenges Encountered & Solutions
+
+During the implementation, we handled several real-world Big Data integration issues:
+
+* **Kafka Listener Misconfiguration:** We initially struggled with `NoBrokersAvailable` errors. We resolved this by configuring dual listeners: `29092` for internal Docker communication (Spark-to-Kafka) and `9092` for external host access (Python Producer).
+* **Spark PATH Resolution:** Running `spark-submit` inside the container required using the absolute path `/opt/spark/bin/spark-submit` as it wasn't present in the default OCI runtime PATH.
+* **Schema Enforcement:** Since Kafka handles data as raw bytes, we implemented a strict `StructType` schema in Spark to ensure the incoming JSON events are valid before processing.
+* **Data Persistence:** To achieve a relevant "Monthly Top Chart", we modified the `producer.py` to generate randomized timestamps over a 30-day period, simulating historical depth in the Data Lake.
+
+## 📈 Key Learnings
+
+This project demonstrated the power of the **Lambda Architecture**. While the **Stream Job** provides immediate visibility into viral songs (Trending Now), the **Batch Job** ensures that we can always recalculate high-accuracy business metrics (Top of the Month) even if the real-time windowing parameters change.
