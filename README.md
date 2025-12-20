@@ -1,5 +1,4 @@
-
-# 📋 Project Overview
+# Project Overview
 
 This project implements a complete **Big Data Lambda Architecture** to analyze music streaming data. It solves the challenge of balancing low-latency reporting with comprehensive historical analysis by using two parallel processing layers.
 
@@ -10,7 +9,7 @@ The pipeline simulates a high-traffic streaming platform (similar to Spotify) an
 * **Cold Layer (Batch):** Performs complex aggregations on historical data stored in a **Parquet Data Lake** using **Spark SQL**.
 * **Ingestion:** A Python-based producer generates realistic events (weighted popularity, geolocation, device types) sent to **Apache Kafka**.
 
-## 🏗️ Technical Architecture
+## Technical Architecture
 
 The entire infrastructure is containerized using **Docker Compose** to ensure reproducibility.
 
@@ -23,7 +22,7 @@ The entire infrastructure is containerized using **Docker Compose** to ensure re
 | **Storage** | Parquet Files | Columnar storage format for optimized querying (Snappy compression). |
 
 
-## 🚀 Quick Start
+## Quick Start
 
 1.  **Launch Infrastructure:**
     ```bash
@@ -45,7 +44,7 @@ The entire infrastructure is containerized using **Docker Compose** to ensure re
     docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/work-dir/batch_job.py
     ```
 
-## 📂 Data Lake Structure & Management
+## Data Lake Structure & Management
 
 Our architecture implements a **medallion-style storage logic** where raw events are persisted for long-term durability.
 
@@ -54,7 +53,7 @@ Our architecture implements a **medallion-style storage logic** where raw events
 * **`_checkpoint/`**: Vital for the **Hot Layer**. It stores the current offset of the Kafka stream. If the system crashes, Spark uses this metadata to resume exactly where it left off without losing data (Resilience).
 * **`_spark_metadata/`**: A transaction log that ensures "Exactly-once" processing semantics when writing Parquet files.
 
-## 🛠️ Challenges Encountered & Solutions
+## Challenges Encountered & Solutions
 
 During the implementation, we handled several real-world Big Data integration issues:
 
@@ -63,6 +62,6 @@ During the implementation, we handled several real-world Big Data integration is
 * **Spark PATH Resolution:** Since `spark-submit` was not in the default OCI runtime PATH of the Spark image, we had to use the absolute path `/opt/spark/bin/spark-submit` to execute our jobs within the container.
 * **Schema Enforcement & Data Integrity:** Because Kafka treats data as raw bytes, we implemented a strict `StructType` schema in Spark. This ensures all incoming JSON events are correctly typed and validated before being stored in the Data Lake.
 
-## 📈 Key Learnings
+## Key Learnings
 
 This project demonstrated the power of the **Lambda Architecture**. While the **Stream Job** provides immediate visibility into viral songs (Trending Now), the **Batch Job** ensures that we can always recalculate high-accuracy business metrics (Top of the Month) even if the real-time windowing parameters change.
